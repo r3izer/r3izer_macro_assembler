@@ -1,0 +1,536 @@
+.TITLE MACROS PARA LA PANTALLA
+.PSECT Datos, NOEXE, WRT
+Blink           :  .LONG SMG$M_BLINK
+Normal          :  .LONG SMG$M_NORMAL
+Borra           :  .LONG SMG$M_ERASE_LINE
+Inversa         :  .LONG SMG$M_REVERSE
+Negrita         :  .LONG SMG$M_BOLD
+Teclado         :  .LONG 0
+Ventana         :  .LONG 0
+Pizarron        :  .LONG 0
+Pantalla        :  .LONG 0
+Tecla           :  .BYTE 0
+
+;----------------------PORTADA------------------------------------
+Men0        	:  .ASCID/REPUBLICA BOLIVARIANA DE VENEZUELA/
+Men1        	:  .ASCID/UNIVERSIDAD CENTROCCIDENTAL LISANDRO ALVARADO/
+Men2        	:  .ASCID/DECANATO DE CIENCIA Y TECNOLOGIA/
+Men3        	:  .ASCID/PROYECTO PROGRAMACION III - VAX/
+Men4        	:  .ASCID/          BARQUISIMETO   2020 /
+Men24		      :  .ASCID/PARTICIPANTES : /
+Men25  		    :  .ASCID/OSWALDO YANEZ/
+Men26		      :  .ASCID/ELIZA GRATEROL/
+Men27		      :  .ASCID/JESUS LOPEZ/
+
+
+;------------------ MENU Y MENSAJES--------------------------
+Men5            :  .ASCID /Presione una Tecla para Continuar/
+Men6            :  .ASCID /1.-/
+Men7            :  .ASCID /OPCION 1: PALABRA PALINDROME/
+Men8            :  .ASCID /2.-/
+Men9            :  .ASCID /OPCION 2: COMPARAR DOS CADENAS/
+Men10           :  .ASCID /3.-/
+Men11           :  .ASCID /OPCION 3: CONCATENAR CADENAS/
+Men12           :  .ASCID /MENU DEL PROYECTO/
+Men13           :  .ASCID /4.-/
+Men14           :  .ASCID /OPCION 4: REEMPLAZAR/
+Men15		        :  .ASCID /5.-/
+Men16 		      :  .ASCID /SALIR/
+Men28		        :  .ASCID /6.-/
+Men29 		      :  .ASCID /PANTALLA DE INICIO/
+Men30		        :  .ASCID/EJECUTAR LA FUNCION NUEVAMENTE? 1 -> SI, OTRA TECLA -> NO: /
+
+
+;------------------MENSAJES PARA LAS OPCIONES--------------------------
+Men17           :  .ASCID /INGRESE UNA CADENA: /
+Men18           :  .ASCID /SALIDA : --> ES PALINDROME/
+Men19           :  .ASCID /SALIDA : --> NO ES PALINDROME/
+Men20           :  .ASCID /INGRESE LA PRIMERA CADENA : /
+Men21           :  .ASCID /INGRESE LA SEGUNDA CADENA : /
+men22           :  .ASCID /SALIDA : --> LAS CADENAS SON IGUALES/
+men23           :  .ASCID /SALIDA : --> LAS CADENAS SON DIFERENTES/
+men33           :  .ASCID /INGRESE LA POSICION : -->  /
+men34           :  .ASCID /SALIDA : -->  /
+Men35           :  .ASCID /INGRESE LA CADENA: /
+Men36           :  .ASCID /INGRESAR OTRA CADENA? 1 -> SI, OTRA TECLA -> NO: /
+Men37	         	:  .ASCID /SELECCIONE ALGUNA DE LAS OPCIONES/
+
+
+
+;============= VARIABLES GLOBALES===================
+
+; VARIABLE PARA LAS OPCIONES
+cadena1         :.blkb 100
+lonCadena1      :.long 0
+desc_cadena1    :.long 99
+                 .long cadena1
+igual           :.byte 1
+
+
+
+cadena2		      :.blkb 100
+loncadena2 	    :.long 0
+desc_cadena2	  :.long 99
+.long cadena2
+
+
+cadena3		       :.blkb 100
+loncadena3 	     :.long 0
+desc_cadena3	   :.long 99
+.long cadena3
+
+
+;=============AUXILIAR PARA MACROS =============
+RESP			:.LONG 0
+D_RESP			:.LONG 4
+			.LONG RESP
+
+LON_RESP		:.LONG 0
+POS			:.LONG 0
+D_POS			:.LONG 4
+			.LONG POS
+
+LON0			:.LONG 0
+
+
+;=============MACROS PARA LAS INTERFAZ EN PANTALLA==========================
+
+;------------------LIMPIA UNA REGION DE LA PANTALLA VIRTUAL--------------------------
+
+.MACRO LIMPIAR_PANTALLA Cf, Ff, Cc, Fc, Pant
+    PUSHAL  Cf
+    PUSHAL  Ff
+    PUSHAL  Cc
+    PUSHAL  Fc
+    PUSHAL  Pant
+    CALLS #5, G^SMG$ERASE_DISPLAY
+.ENDM  LIMPIAR_PANTALLA
+
+
+
+
+;------------------ESCRIBE TIRAS DE CARACTERES DE TAMANO NORMAL--------------------------
+
+.MACRO WRITE   Col, Fil, Atrib, Men, Vent
+    PUSHAL   Atrib
+    PUSHAL   #0
+    PUSHAL   Col
+    PUSHAL   Fil
+    PUSHAL   Men
+    PUSHAL   Vent
+    CALLS #6,G^SMG$PUT_CHARS
+.ENDM WRITE
+
+
+
+;------------------DIBUJAR FIGURA-------------------------
+
+.MACRO RECTANGULO Cf, Ff, Cc, Fc, Pant
+    PUSHAL Cf
+    PUSHAL Ff
+    PUSHAL Cc
+    PUSHAL Fc
+    PUSHAL Pant
+    CALLS #5,G^SMG$DRAW_RECTANGLE
+.END RECTANGULO
+
+
+;------------------CREA UN TECLADO VIRTUAL PARA EL EMULADOR-------------------------
+.MACRO CREA_TECLADO Keyboard
+    PUSHAL Keyboard
+    CALLS #1,G^SMG$CREATE_VIRTUAL_KEYBOARD
+.ENDM  CREA_TECLADO
+
+
+
+;------------------DEFINE UN MARCO-------------------------
+.MACRO CREA_PIZARRON Piza
+    PUSHAL Piza
+    CALLS #1,G^SMG$CREATE_PASTEBOARD
+.ENDM  CREA_PIZARRON
+
+
+;------------------DEFINE UNA PANTALLA VIRTUAL-------------------------
+.MACRO  CREAR_PANTALLA  Atributo, Pant, NumCol, NumFil
+    PUSHAL Atributo
+    PUSHAL Pant
+    PUSHAL NumCol
+    PUSHAL NumFil
+    CALLS #4,G^SMG$CREATE_VIRTUAL_DISPLAY
+.ENDM   CREAR_PANTALLA
+
+
+;------------------PEGA UNA PANTALLA EN UN MARCO-------------------------
+.MACRO PEGAR_PANTALLA Piza, Pant
+    PUSHAL #1
+    PUSHAL #1
+    PUSHAL Piza
+    PUSHAL Pant
+    CALLS #4,G^SMG$PASTE_VIRTUAL_DISPLAY
+.ENDM  PEGAR_PANTALLA
+
+
+;------------------GENERA EN PANTALLA UN CUADRO-------------------------
+.MACRO CUADRO
+    Limpiar_pantalla #79, #24, #1, #1, Pantalla
+    Rectangulo #80, #24, #1, #1, pantalla         ;grande 1
+    Rectangulo #78, #22, #3, #2, pantalla         ;grande 2
+.ENDM CUADRO
+
+
+
+;------------------LEE UNA TECLA SIN ECO EN LA PANTALLA------------------------
+.MACRO READKEY  Tecl, Teclad
+    PUSHAL Tecl
+    PUSHAL Teclad
+    CALLS #2,G^SMG$READ_KEYSTROKE
+.ENDM  READKEY
+
+;------------------ESCRIBE TIRAS DE CARACTERES DE TAMANO DOBLE-----------------------
+.MACRO WRITE_DOB   Col, Fil, Atrib, Men, Vent
+    PUSHAL   Atrib
+    PUSHAL   Col
+    PUSHAL   Fil
+    PUSHAL   Men
+    PUSHAL   Vent
+    CALLS #5,G^SMG$PUT_CHARS_HIGHWIDE
+.ENDM  WRITE_DOB
+
+
+;------------------PARA REALIZAR SALTOS LARGOS------------------
+.MACRO SALTAR  Cond, Etiqueta, ?Opci1, ?Opci2
+    B'Cond  Opci1
+    BRB     Opci2
+    Opci1: JMP Etiqueta
+	Opci2: NOP
+.ENDM SALTAR
+
+
+;------------------ LECTURA DE UNA CADENA------------------------
+.MACRO LEER lon, men, desc_tira
+    PUSHAL lon
+    PUSHAL men
+    PUSHAL desc_tira
+    CALLS #3, G^LIB$GET_INPUT
+	MOVL lon, desc_tira
+.ENDM LEER
+
+
+;------------  CONTROL DE COORDENADAS -----------------------
+.MACRO GOTOXY  Columna, Fila
+	PUSHL Columna
+    PUSHL Fila
+    CALLS #2,G^SCR$SET_CURSOR
+.ENDM  GOTOXY
+
+;=============MACROS AUXILIARES (GENERICAS)==========================
+
+.MACRO PREGUNTA M1,OP,?SEGUIR
+    MOVL #4,D_RESP
+    Limpiar_pantalla #80, #24, #1, #1, PANTALLA
+    Rectangulo #80, #24, #1, #1, PANTALLA
+    GOTOXY  #2,#2
+    LEER LON_RESP,M1,D_RESP
+    CONV_STR_NUM RESP,D_RESP
+    CMPL RESP,#1
+    BNEQ SEGUIR
+    GOTOXY  #2,#2
+    BRW OP
+    SEGUIR:
+.ENDM PREGUNTA
+
+
+.MACRO CONV_STR_NUM NUM,DESC
+    PUSHAL NUM
+    PUSHAL DESC
+    CALLS #2,G^OTS$CVT_TU_L
+.ENDM CONV_STR_NUM
+
+
+.MACRO LIMPIAR_BLK B, D, ?FOR
+    MOVAB B,R1
+    CLRL R2
+    FOR:
+    CLRB (R1)[R2]
+	ACBL #99,#1,R2,FOR
+    MOVL #100,D
+.ENDM LIMPIAR_BLK
+
+
+
+;==========1) DETERMINE SI UNA PALABRA ES PALINDROME O NO================
+
+.MACRO PALINDROME cadena1,lonCadena1,desc_cadena1,igual ?IGUAL,?WHILE,?DIFERENTES,?SEGUIR,?END,?NO,?FIN
+;SIMULANDO WHILE
+
+    CUADRO
+    Write #25, #3, negrita, Men7, pantalla
+
+    GOTOXY #10, #10
+
+    MOVL #99, desc_cadena1
+
+    LEER lonCadena1, Men17, desc_cadena1  ;lee la cadena
+
+    MOVAL cadena1, R6
+
+    clrl R7
+
+    DIVL3 #2,lonCadena1, R9
+
+    MOVL lonCadena1, R8
+
+    DECL R8
+
+    MOVB #1, igual
+    WHILE:
+        CMPB (R6)[R7], (R6)[R8]
+        BNEQ diferentes
+        INCL R7
+        DECL R8
+
+        CMPL R7, R9
+        BNEQ  seguir
+
+        BRW end
+    SEGUIR:
+        BRW WHILE
+
+        DIFERENTES:
+        CLRB igual
+
+    END:
+        TSTB igual
+        BEQL no
+
+        Write #10, #12, negrita, Men18, pantalla
+        BRW fin
+
+    NO:
+
+        Write #10, #12, negrita, Men19, pantalla
+    FIN:
+		LIMPIAR_BLK cadena1,desc_cadena1
+
+.ENDM PALINDROME
+
+
+;==========2) COMPARAR DOS STRING Y DETERMINAR SI SON IGUALES O NO===========
+
+.MACRO COMPARAR cadena2,cadena3,lonCadena2,lonCadena3,desc_cadena2,desc_cadena3,?DO,?DIFERENTES, ?IGUALES, ?FIN
+;SIMULANDO DO LOOP UNTIL
+	CUADRO
+
+    Write #25, #3, negrita, Men9, pantalla
+    GOTOXY #10,#10
+    LEER lonCadena2, Men20, desc_cadena2 ; lee la primera cadena
+    GOTOXY #10,#12
+    LEER lonCadena3, Men21, desc_cadena3 ; lee la segunda cadena
+    CLRL R2 ; i =0
+
+    MOVAL cadena2,R3
+    MOVAL cadena3,R4
+
+    CMPL lonCadena2,lonCadena3
+    BNEQU  DIFERENTES
+
+    DO:
+		CMPL (R3)[R2],(R4)[R2] ; cadena2[i] == cadena3[i]
+
+        BNEQ  DIFERENTES
+        AOBLSS lonCadena2,R2,DO ; AOBLSS : INCREMENTA EL CONTADOR HASTA ALCANZAR EL LIMITE-1
+        BEQL IGUALES
+
+        IGUALES:
+            Write #10, #14, negrita, Men22, pantalla
+
+			JMP FIN
+
+        DIFERENTES:
+            Write #10, #14, negrita, Men23, pantalla
+
+			JMP FIN
+    FIN:
+	        LIMPIAR_BLK cadena2,desc_cadena2
+		LIMPIAR_BLK cadena3,desc_cadena3
+
+
+.ENDM COMPARAR
+
+;===========3) CONCATENAR STRING ===============================
+
+.MACRO CONCATENAR cadena1,cadena2,lonCadena1,lonCadena2,desc_cadena1,desc_cadena2,?DO, ?DOINT, ?SEGUIR
+;SIMULANDO DO LOOP UNTIL
+
+	MOVAB cadena1,R6
+    MOVAB cadena2,R8
+	CLRL R7
+DO:
+    CUADRO
+    Write #25, #3, negrita, Men11, pantalla
+    GOTOXY #10,#10
+    Rectangulo #80, #24, #1, #1, PANTALLA
+
+    CLRL R10
+
+	GOTOXY #10,#10
+    LEER lonCadena1, Men35, desc_cadena1
+
+    DOINT:
+        MOVB (R6)[R10],(R8)[R7] ; cadena2[loncadena2+j] == cadena1[i]
+        INCL R7 ; j++
+		AOBLSS lonCadena1,R10,DOINT  ; AOBLSS : INCREMENTA EL CONTADOR HASTA ALCANZAR EL LIMITE-1
+
+	INCL R7 ; j++
+	LIMPIAR_BLK cadena1,desc_cadena1
+
+	GOTOXY #10,#14
+    LEER LON_RESP,Men36,D_RESP
+    CONV_STR_NUM RESP,D_RESP
+    CMPL RESP,#1
+	BNEQ SEGUIR
+    Limpiar_pantalla #79, #24, #1, #1, Pantalla
+	BRW DO
+
+SEGUIR:
+    WRITE #10,#16, NEGRITA, Men34, PANTALLA
+
+    WRITE #23,#16, NORMAL, desc_cadena2, PANTALLA
+
+    LIMPIAR_BLK cadena1,desc_cadena1
+    LIMPIAR_BLK cadena2,desc_cadena2
+
+.ENDM CONCATENAR
+
+
+;==========4) REEMPLAZAR STRING===========================
+
+.MACRO REEMPLAZAR cadena2,cadena3,lonCadena2,lonCadena3,desc_cadena2,desc_cadena3
+
+	CUADRO
+    Write #25, #3, negrita, Men14, pantalla
+    GOTOXY #10,#10
+	Rectangulo #80, #24, #1, #1, PANTALLA
+    MOVAB cadena2,R6
+    CLRL R7
+
+    MOVAB cadena3,R8
+    CLRL R9
+
+    GOTOXY #10,#10
+    LEER lonCadena2, Men20, desc_cadena2
+    GOTOXY #10,#12
+    LEER lonCadena3, Men21, desc_cadena3
+    GOTOXY #10,#14
+    LEER LON0,Men33,D_POS
+    CONV_STR_NUM POS,D_POS
+    MOVL POS,R7
+
+    MOVC3 loncadena3,(R8)[R9],(R6)[R7]
+
+    MOVL #100,desc_cadena2
+
+    WRITE #10,#16, NEGRITA, Men34, PANTALLA
+
+    WRITE #23,#16, NORMAL, desc_cadena2, PANTALLA
+
+	LIMPIAR_BLK cadena2,desc_cadena2
+	LIMPIAR_BLK cadena3,desc_cadena3
+
+.ENDM REEMPLAZAR
+
+;=====================SECCION DE CODIGO===============================
+.PSECT Codigo, EXE,NOWRT,LONG
+.ENTRY Proyecto, 0
+
+
+;--------------------------PORTADA-----------------------------------
+	CREA_TECLADO Teclado
+    CREA_PIZARRON Pizarron
+    CREAR_PANTALLA  Normal, Pantalla, #80, #24
+    PEGAR_PANTALLA Pizarron, Pantalla
+
+	opc0:
+		Limpiar_pantalla #79, #24, #1, #1, Pantalla
+		Rectangulo #81, #20, #1, #1, pantalla         ;grande 1
+		Rectangulo #78, #20, #3, #2, pantalla         ;grande 2
+		Rectangulo #80, #24, #1, #22, pantalla        ;pequeno
+		Write #20, #4,  negrita, Men0, pantalla
+		Write #15, #5,  negrita, Men1, pantalla
+		Write #22, #6,  negrita, Men2, pantalla
+		Write #22, #12, negrita, Men3, pantalla
+		Write #22, #23, blink, Men4, pantalla
+		Write #60, #15, negrita, Men24, pantalla
+		Write #60, #16, negrita, Men25, pantalla
+		Write #60, #17, negrita, Men26, pantalla
+		Write #60, #18, negrita, Men27, pantalla
+
+
+    ReadKey Tecla, Teclado
+
+;--------------------------MENU-----------------------------------
+	pan2:
+	 Limpiar_pantalla #79, #24, #1, #1, Pantalla
+	 Rectangulo #81, #2,  #1, #1,    pantalla      ;grande 1
+     	 Rectangulo #78, #20, #3, #2,    pantalla      ;grande 2
+     	 Rectangulo #80, #24, #1, #22,   pantalla      ;pequeno
+	 Write #23, #23, blink,   Men37, pantalla
+
+      ;posición de los botones para la opciones
+      Write #8,  #8, inversa, Men6, pantalla
+      Write #12, #8, negrita, Men7, pantalla
+      Write #8, #10, inversa, Men8, pantalla
+      Write #12, #10, negrita, Men9, pantalla
+      Write #8,  #12, inversa, Men10, pantalla
+      Write #12, #12, negrita, Men11, pantalla
+      Write_DOB  #8,  #4,  negrita, Men12, pantalla
+      Write #8, #14, inversa, Men13, pantalla
+      Write #12, #14, negrita, Men14, pantalla
+      Write #8, #16, inversa, Men15, pantalla
+      Write #12, #16, negrita, Men16, pantalla
+      Write #8, #18, inversa, Men28, pantalla
+      Write #12, #18, negrita, Men29, pantalla
+
+
+
+	 ning:ReadKey Tecla, Teclado
+          cmpb Tecla, #^A/1/
+          SALTAR eql, opc1
+          cmpb Tecla, #^A/2/
+          SALTAR  eql, opc2
+          cmpb Tecla, #^A/3/
+          SALTAR eql, opc3
+          cmpb Tecla, #^A/4/
+          SALTAR eql, opc4
+	  cmpb Tecla, #^A/5/
+          SALTAR eql, opc5
+	  cmpb Tecla, #^A/6/
+          SALTAR eql, opc0
+          jmp ning
+
+
+
+	opc1: PALINDROME cadena1, igual
+          ReadKey Tecla, Teclado
+		  PREGUNTA Men30,opc1
+		  BRW pan2
+
+    opc2: COMPARAR cadena2, cadena3
+          ReadKey Tecla, Teclado
+		  PREGUNTA Men30,opc2
+		  BRW pan2
+
+	opc3: CONCATENAR cadena1,cadena2
+          ReadKey Tecla, Teclado
+		  PREGUNTA Men30,opc3
+		  BRW pan2
+
+    opc4: REEMPLAZAR cadena2, cadena3
+		  ReadKey Tecla, Teclado
+		  PREGUNTA Men30,opc4
+		  BRW pan2
+
+	opc5: Limpiar_pantalla #79, #24, #1, #1, Pantalla
+		  RET
+
+.END Proyecto
