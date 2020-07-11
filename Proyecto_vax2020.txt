@@ -17,10 +17,6 @@ Men1        	:  .ASCID/UNIVERSIDAD CENTROCCIDENTAL LISANDRO ALVARADO/
 Men2        	:  .ASCID/DECANATO DE CIENCIA Y TECNOLOGIA/
 Men3        	:  .ASCID/PROYECTO PROGRAMACION III - VAX/
 Men4        	:  .ASCID/          BARQUISIMETO   2020 /
-Men24		      :  .ASCID/PARTICIPANTES : /
-Men25  		    :  .ASCID/OSWALDO YANEZ/
-Men26		      :  .ASCID/ELIZA GRATEROL/
-Men27		      :  .ASCID/JESUS LOPEZ/
 
 
 ;------------------ MENU Y MENSAJES--------------------------
